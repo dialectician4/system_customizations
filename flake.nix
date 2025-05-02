@@ -54,10 +54,12 @@
 		unixtools.nettools
 		nixgl
 		nerd-fonts.ubuntu
+		nerd-fonts.jetbrains-mono
 		gnumake
 		gcc
 		unzip
 		xclip
+		# neovim
                 
                 # The packages you specifically mentioned
                 #neovim
@@ -83,8 +85,15 @@
               ];
             };
             
-            # Enable Home Manager
+            # Enable Home Manager    git push --set-upstream origin restructure
             programs.home-manager.enable = true;
+
+	    # Configs
+	    xdg.configFile."wezterm".source = (builtins.path { path = ./wezterm; name = "wezterm"; });
+	    xdg.configFile."wezterm".recursive = true;
+	    # xdg.configFile."nvim".source = config.lib.file.mkOutOfStoreSymlink (builtins.toPath ./nvim); #(builtins.path { path = ./nvim; name = "nvim"; });
+	    # xdg.configFile."nvim".recursive = true;
+
 	    # allowUnfree = true;
 	    fonts.fontconfig.enable = true;
 
@@ -149,6 +158,8 @@
 		lcd () {
 		  z "$1" && lsd -1A;
 		}
+
+		ln -sf ~/.config/nix/nvim ~/.config/nvim
               '';
             };
             
