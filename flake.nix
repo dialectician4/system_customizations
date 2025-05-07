@@ -63,8 +63,9 @@
                 
                 # The packages you specifically mentioned
                 #neovim
-                # rustup
-		cargo
+                rustup
+		# cargo
+                fnm
                 openssh
                 zellij
 		ocs-url
@@ -82,6 +83,7 @@
 		syncthing
 		syncthingtray
 		# google-chrome-stable
+                # vscode
               ];
             };
             
@@ -137,6 +139,7 @@
 	      enable = true;
 	    };
 
+
 	    programs.starship = {
 	      enable = true;
 	    };
@@ -160,20 +163,23 @@
 		}
 
 		ln -sf ~/.config/nix/nvim ~/.config/nvim
+
+                eval "$(fnm env --use-on-cd --shell bash)"
+                export PATH=$PATH:/home/edwin/.cargo/bin
               '';
             };
             
             # SSH configuration
             programs.ssh = {
               enable = true;
-              matchBlocks = {
-                # Example SSH configuration
-                # "example-host" = {
-                #   hostname = "example.com";
-                #   user = "username";
-                #   port = 22;
-                # };
-              };
+              # matchBlocks = {
+              #   # Example SSH configuration
+              #   # "example-host" = {
+              #   #   hostname = "example.com";
+              #   #   user = "username";
+              #   #   port = 22;
+              #   # };
+              # };
             };
 	   # ISSUE: Currently can't find a way to setup kdeconnect on non-Nix system with home-manager
 	   # services.kdeconnect = {
