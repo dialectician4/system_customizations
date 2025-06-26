@@ -38,52 +38,71 @@
               username = username;
               homeDirectory = "/home/${username}";
               stateVersion = "23.11";  # Update if needed to match your nixpkgs version
+              sessionVariables = {
+                CAT = "Mia";
+              };
               
               # Packages to install
               packages = with pkgs; [
-                # Basic utilities
+                # CORE
                 git
                 curl
+                openssh
                 wget
-                ripgrep
-                lsd  # Modern ls replacement
-                bat  # Modern cat replacement
                 htop
-                fzf
-                jq
 		unixtools.nettools
-		nixgl
 		nerd-fonts.ubuntu
 		nerd-fonts.jetbrains-mono
-		gnumake
+		ocs-url
+		# gnumake
 		gcc
 		unzip
 		xclip
-		# neovim
+                ripgrep
+
+                # Terminal Custom
+                lsd
+                bat
+                fzf
+                jq
+		yazi
+                just
+                mask
+		hyfetch
+		bottom
+                zellij
+                slumber
                 
-                # The packages you specifically mentioned
-                #neovim
+                # Languages
                 rustup
 		# cargo
                 fnm
-                openssh
-                zellij
-		ocs-url
-		yazi
-		hyfetch
-		bottom
+                uv
 		go
+                deno
+                nodejs
+                rusty-man
+                typescript
+                # typescript-language-server
 
-		# General apps
-		# plasma5Packages.kdeconnect-kde
 		# Desktop Packages
-		# obsidian
+		# plasma5Packages.kdeconnect-kde
+		obsidian
 		spotify
-		flatpak
+		# flatpak
 		syncthing
 		syncthingtray
+                vlc
 		# google-chrome-stable
                 # vscode
+		nixgl
+
+                # work - testing
+                autoconf
+                automake
+                # libtool
+                pkg-config
+                gawk
               ];
             };
             
@@ -137,6 +156,7 @@
 	    
 	    programs.zoxide = {
 	      enable = true;
+              enableBashIntegration = true;
 	    };
 
 
@@ -147,25 +167,59 @@
             # Shell configuration (assuming bash, uncomment if you use zsh)
             programs.bash = {
               enable = true;
+              enableCompletion = true;
+              sessionVariables = {
+                CAT = "Mia";
+              };
               shellAliases = {
-                ll = "ls -la";
-		#cd = "zoxide";
+                ll = "lsd -l";
+		cd = "z";
                 update = "nix flake update";
                 hm-switch = "home-manager switch --flake ~/.config/nix";
 		hm-nvim = "nvim ~/.config/nix/flake.nix";
+		hm-vi = "nvim ~/.config/nix/flake.nix";
+                vi-config = "nvim ~/.config/nix/nvim/init.lua";
 		zj = "zellij";
 		yz = "yazi";
+                gs = "git status";
+                zz = "slumber";
               };
               initExtra = ''
-                # Add your custom bash configuration here
+                # include .profile if it exists
+                [[ -f ~/.profile ]] && . ~/.profile
+
+                # Functions
 		lcd () {
-		  z "$1" && lsd -1A;
+                  local target="."
+                  if [ -n "$1" ]; then
+                    target="$1"
+                  fi
+		  z "$target" && lsd -1A
 		}
+		llcd () {
+                  local target="."
+                  if [ -n "$1" ]; then
+                    target="$1"
+                  fi
+		  z "$target" && lsd -1lA;
+		}
+                gucp () {
+                  git add -u && git commit -m "$1" && git push
+                }
+
+                gacp () {
+                  git add . && git commit -m "$1" && git push
+                }
 
 		ln -sf ~/.config/nix/nvim ~/.config/nvim
 
-                eval "$(fnm env --use-on-cd --shell bash)"
                 export PATH=$PATH:/home/edwin/.cargo/bin
+                export P=~/projects
+                export N=~/.config/nix
+
+                # eval "$(zoxide init bash)"
+                eval "$(fnm env --use-on-cd --shell bash)"
+                eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
               '';
             };
             
