@@ -3,12 +3,12 @@
 let
   user = "edwinsantos";
   # Define the content of your file as a derivation
-  myEmacsLauncher = pkgs.writeScript "emacs-launcher.command" ''
-    #!/bin/sh
-    emacsclient -c -n &
-  '';
+  # myEmacsLauncher = pkgs.writeScript "emacs-launcher.command" ''
+  #   #!/bin/sh
+  #   emacsclient -c -n &
+  # '';
   sharedFiles = import ../shared/files.nix { inherit config pkgs; };
-  additionalFiles = import ./files.nix { inherit user config pkgs; };
+  # additionalFiles = import ./files.nix { inherit user config pkgs; };
 in
 {
   imports = [
@@ -52,8 +52,8 @@ in
         packages = pkgs.callPackage ./packages.nix {};
         file = lib.mkMerge [
           sharedFiles
-          additionalFiles
-          { "emacs-launcher.command".source = myEmacsLauncher; }
+          # additionalFiles
+          # { "emacs-launcher.command".source = myEmacsLauncher; }
         ];
         stateVersion = "23.11";
       };
@@ -76,10 +76,10 @@ in
      # { path = "/System/Applications/Firefox.app/"; }
      # { path = "/System/Applications/Wezterm.app/"; }
      { path = "/System/Applications/System Settings.app/"; }
-     {
-       path = toString myEmacsLauncher;
-       section = "others";
-     }
+     # {
+     #   path = toString myEmacsLauncher;
+     #   section = "others";
+     # }
      {
        path = "${config.users.users.${user}.home}/Downloads";
        section = "others";

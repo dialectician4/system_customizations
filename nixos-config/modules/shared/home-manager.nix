@@ -112,9 +112,9 @@ export EDITOR="neovim"
 export ALTERNATE_EDITOR=""
 # export VISUAL="emacsclient -c -a emacs"
 
-e () {
-emacsclient -t "$@"
-}
+# e () {
+# emacsclient -t "$@"
+# }
 
 # nix shortcuts
 shell () {
@@ -334,9 +334,9 @@ shellAliases = {
 	export EDITOR="nvim"
 	# export VISUAL="emacsclient -c -a emacs"
 
-	e() {
-	  emacsclient -t "$@"
-	}
+	# e() {
+	#   emacsclient -t "$@"
+	# }
 
 	# nix shortcuts
 	shell() {
