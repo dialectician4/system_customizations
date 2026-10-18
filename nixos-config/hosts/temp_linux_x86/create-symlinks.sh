@@ -1,0 +1,6 @@
+ln -sfnT "$(pwd)/../../../wezterm" "$HOME/.config/wezterm"
+ln -sfnT "$(pwd)/../../../nvim" "$HOME/.config/nvim"
+ln -sfnT "$(pwd)/../../../zellij" "$HOME/.config/zellij"
+ln -sfnT "$(pwd)/../../../starship/starship.toml" "$HOME/.config/starship.toml"
+ln -sfnT "$(pwd)/../../../starship/starship.toml" "$HOME/.config/starship.toml"
+ln -sfnT "$(pwd)/.bashrc" "$HOME/.bashrc"
