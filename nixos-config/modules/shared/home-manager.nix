@@ -22,6 +22,11 @@ let name = "Edwin Santos";
       pull.rebase = true;
       rebase.autoStash = true;
     };
+    signing = {
+      format = "openpgp";
+      key = "F9038182FA6D8590";
+      signByDefault = true;
+    };
   };
 
   neovim = {
@@ -49,6 +54,7 @@ let name = "Edwin Santos";
               enableCompletion = true;
               sessionVariables = {
                 CAT = "Mia";
+		NVIM_NOTTYFAST = "1 nvim";
               };
               shellAliases = {
                 ll = "lsd -l";
@@ -90,9 +96,19 @@ gacp () {
 git add . && git commit -m "$1" && git push
 }
 
+y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d "" cwd < "$tmp"
+	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
+
 ln -sf ~/.config/sys_config/nvim ~/.config/nvim
 
 export PATH=$PATH:/home/edwin/.cargo/bin
+export PATH=$PATH:/home/edwinsantos/.cargo/bin
+export PATH="/Users/edwinsantos/.bun/bin:$PATH"
 export P=~/projects
 export N=~/.config/nix
 
@@ -240,6 +256,7 @@ nix-shell '<nixpkgs>' -A "$1"
 enableCompletion = true;
 sessionVariables = {
       CAT = "Mia";
+      NVIM_NOTTYFAST = "1 nvim";
 };
 shellAliases = {
       ll = "lsd -l";
@@ -256,7 +273,7 @@ shellAliases = {
       ga = "git add";
       gau = "git add -u";
       gco = "git checkout";
-      gc = "git commit -m";
+      gc = "git commit";
       gsm = "git stash push -m";
       zz = "slumber";
       watch = "watchexec";
@@ -295,19 +312,37 @@ shellAliases = {
 	fi
 	z "$target" && lsd -1lA;
 	}
+	e () {
+	local target="."
+	if [ -n "$1" ]; then
+	  target="$1"
+	fi
+	z "$target" && lsd -1lA;
+	}
 	gucp () {
 	git add -u && git commit -m "$1" && git push
 	}
 
 	gacp () {
-	git add . && git commit -m "$1" && git push
+		git add . && git commit -m "$1" && git push
 	}
+	y() {
+		local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+		yazi "$@" --cwd-file="$tmp"
+		IFS= read -r -d "" cwd < "$tmp"
+		[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+		rm -f -- "$tmp"
+	}
+
 
 	ln -sf ~/.config/sys_config/nvim ~/.config/nvim
 	ln -sf ~/.config/sys_config/wezterm/ ~/.config/wezterm
 	ln -sf ~/.config/sys_config/zj_config.kdl ~/.config/zellij/config.kdl
 
 	export PATH=$PATH:/home/edwin/.cargo/bin
+	export PATH=$PATH:/home/edwinsantos/.cargo/bin
+        export PATH=$PATH:/Users/edwinsantos/.cargo/bin
+	export PATH="/Users/edwinsantos/.bun/bin:$PATH"
 	export P=~/projects
 	export N=~/.config/nix
 

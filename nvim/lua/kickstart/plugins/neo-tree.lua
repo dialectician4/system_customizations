@@ -11,14 +11,15 @@ return {
   },
   cmd = 'Neotree',
   keys = {
-    { '\\', ':Neotree reveal<CR>', desc = 'NeoTree reveal', silent = true },
+    { '<leader>\\', ':Neotree float reveal<CR>', desc = 'NeoTree reveal', silent = true },
   },
   opts = {
+    close_if_last_window = true,
     auto_close_on_select = false,
     filesystem = {
       window = {
         mappings = {
-          ['\\'] = 'close_window',
+          ['<leader>\\'] = 'close_window',
           ['O'] = 'open_nofocus',
         },
       },

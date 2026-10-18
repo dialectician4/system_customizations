@@ -19,8 +19,7 @@
 ========         ||   KICKSTART.NVIM   ||   |-----|          ========
 ========         ||                    ||   | === |          ========
 ========         ||                    ||   |-----|          ========
-========         ||:Tutor              ||   |:::::|          ========
-========         |'-..................-'|   |____o|          ========
+========         ||:Tutor              ||   |:::::|          ======== ========         |'-..................-'|   |____o|          ========
 ========         `"")----------------(""`   ___________      ========
 ========        /::::::::::|  |::::::::::\  \ no mouse \     ========
 ========       /:::========|  |==hjkl==:::\  \ required \    ========
@@ -93,6 +92,9 @@ I hope you enjoy your Neovim journey,
 P.S. You can delete this when you're done too. It's your config now! :)
 --]]
 
+-- local lspconfig = require 'lspconfig'
+-- local configs = require 'lspconfig.configs'
+
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -111,7 +113,7 @@ vim.g.have_nerd_font = true
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
 -- vim.o.statuscolumn = '%s %l %r'
 
 -- Enable mouse mode, can be useful for resizing splits for example!
@@ -242,6 +244,24 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.wo.signcolumn = 'no'
   end,
 })
+
+vim.lsp.buf.format {
+  filter = function(client)
+    return client.name ~= 'ts_ls'
+  end,
+}
+
+vim.lsp.inlay_hint.enable(true)
+
+vim.lsp.handlers['textDocument/hover'] = vim.lsp.with(vim.lsp.handlers.hover, {
+  border = 'rounded', -- optional, keep your existing style
+  focusable = true,
+  stylize_markdown = false, -- disables treesitter highlighting in hover float
+})
+
+DENO_ROOT_FILES = { 'deno.json', 'deno.jsonc', 'deno.lock' }
+
+-- require('lspconfig').gleam.setup {}
 
 -- [[ Configure and install plugins ]]
 --
@@ -462,7 +482,6 @@ require('lazy').setup({
       end, { desc = '[S]earch [N]eovim files' })
     end,
   },
-
   -- LSP Plugins
   {
     -- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
@@ -610,6 +629,7 @@ require('lazy').setup({
             map('<leader>th', function()
               vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
             end, '[T]oggle Inlay [H]ints')
+            vim.lsp.inlay_hint.enable(true, { bufnr = event.buf })
           end
         end,
       })
@@ -631,6 +651,66 @@ require('lazy').setup({
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
+      -- ########################################## Utils #################################################
+      local lspconfig = require 'lspconfig'
+      local configs = require 'lspconfig.configs'
+      local util = lspconfig.util
+
+      -- Define the standard Deno project root files
+      local DENO_ROOT_FILES = { 'deno.json', 'deno.jsonc', 'deno.lock' }
+      -- Define the standard Node.js project root files
+      local NODE_ROOT_FILES = { 'package.json', 'tsconfig.json', '.node-version' }
+
+      -- Create a searcher that prioritizes your .node-version file
+      local node_root_searcher = util.root_pattern(unpack(NODE_ROOT_FILES))
+
+      -- Custom root_dir function for ts_ls (or tsserver)
+      local function ts_ls_root_dir(fname)
+        local root = node_root_searcher(fname)
+
+        if root and root ~= util.path.sanitize(vim.loop.cwd()) then
+          for _, file in ipairs(DENO_ROOT_FILES) do
+            if util.path.is_file(root .. '/' .. file) then
+              return nil
+            end
+          end
+        end
+        return root
+      end
+      -- ============================================================
+      -- Experimental Roc LSP config
+      -- ============================================================
+      -- local roc_path = '/Users/edwinsantos/projects/zig/roc/zig-out/bin/roc'
+      --
+      -- if not configs.roc_lsp then
+      --   configs.roc_lsp = {
+      --     default_config = {
+      --       name = 'roc_lsp',
+      --       cmd = { roc_path, 'experimental-lsp', '--debug-transport' },
+      --       filetypes = { 'roc' },
+      --       root_markers = { 'main.roc', 'app.roc' },
+      --       single_file_support = true,
+      --     },
+      --   }
+      -- end
+      --
+      -- lspconfig.roc_lsp.setup {
+      --   capabilities = require('cmp_nvim_lsp').default_capabilities(),
+      -- }
+
+      -- require('lspconfig').gleam.setup {}
+      vim.lsp.config('gleam', { capabilities = capabilities })
+      vim.lsp.enable 'gleam'
+
+      -- ensure_installed = vim.tbl_filter(function(name)
+      --   return name ~= 'roc_lsp'
+      -- end, ensure_installed)
+
+      --
+      -- ============================================================
+      -- Experimental Roc LSP config
+      -- ============================================================
+
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
       --
@@ -641,26 +721,57 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {},
         gopls = {},
         -- pyright = {},
-        rust_analyzer = {},
+        -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
-        ts_ls = {
-          root_dir = require('lspconfig').util.root_pattern { '.node-version' },
-          single_file_support = false,
-          settings = {},
-        },
-        denols = {
-          root_dir = require('lspconfig').util.root_pattern { 'deno.json', 'deno.lock', 'deno.jsonc' },
-          single_file_support = false,
-          settings = {},
-        },
+        -- ts_ls = {
+        --   -- root_dir = ts_ls_root_dir,
+        --   -- require('lspconfig').util.root_pattern { '.node-version' },
+        --   root_dir = function(fname)
+        --     local util = require 'lspconfig.util'
+        --     -- Don't start if this is a Deno project
+        --     -- local deno_root = util.root_pattern('deno.json', 'deno.jsonc', 'deno.lock')(fname)
+        --     -- if deno_root then
+        --     --   return nil
+        --     -- end
+        --     return util.root_pattern('package.json', 'tsconfig.json', '.node-version')(fname)
+        --   end,
+        --
+        --   cmd = { 'typescript-language-server', '--stdio' },
+        --   root_markers = { 'package.json', '.node-version' },
+        --   single_file_support = true,
+        --   settings = {
+        --     javascript = {
+        --       inlayHints = {
+        --         enabled = true,
+        --       },
+        --     },
+        --     typescript = {
+        --       inlayHints = {
+        --         enabled = true,
+        --         includeInlayParameterNameHints = 'all',
+        --         includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+        --         includeInlayFunctionParameterTypeHints = true,
+        --         includeInlayVariableTypeHints = true,
+        --         includeInlayPropertyDeclarationTypeHints = true,
+        --         includeInlayFunctionLikeReturnTypeHints = true,
+        --         includeInlayEnumMemberValueHints = true,
+        --       },
+        --     },
+        --   },
+        -- },
+        -- denols = {
+        --   -- root_markers = { 'deno.json', 'deno.lock', 'deno.jsonc' },
+        --   single_file_support = false,
+        --   settings = {},
+        -- },
         --
 
         lua_ls = {
@@ -703,13 +814,146 @@ require('lazy').setup({
             -- by the server configuration above. Useful when disabling
             -- certain features of an LSP (for example, turning off formatting for ts_ls)
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
+            -- require('lspconfig')[server_name].setup(server)
+            vim.lsp.config(server_name, server)
+            vim.lsp.enable(server_name)
           end,
         },
       }
     end,
   },
+  {
+    'mrcjkb/rustaceanvim',
+    version = '^6', -- Recommended
+    lazy = false, -- This plugin is already lazy
+    -- server = {
+    --   vim.keymap.set('n', '<leader>a', function()
+    --     vim.cmd.RustLsp 'codeAction'
+    --   end, { silent = true, bufer = bufnr }),
+    -- },
+    keys = {
+      {
+        '<leader>aa',
+        function()
+          vim.cmd.RustLsp { 'codeAction' }
+        end,
+        mode = '',
+        desc = '[a]ction - RustAnalyzer Code [a]ctions',
+      },
+      {
+        '<leader>ah',
+        function()
+          vim.cmd.RustLsp { 'hover', 'actions' }
+          vim.cmd.RustLsp { 'hover', 'actions' }
+        end,
+        mode = '',
+        desc = '[a]ction - [h]over Actions',
+      },
+      {
+        '<leader>ac',
+        function()
+          vim.cmd.RustLsp 'openCargo'
+        end,
+        mode = '',
+        desc = '[a]ction - Open [c]argo.toml',
+        -- TODO: Have this open Cargo.toml in a separate (floating) buffer
+      },
+      {
+        '<leader>aD',
+        function()
+          vim.cmd.RustLsp { 'relatedDiagnostics' }
+        end,
+        mode = '',
+        desc = '[a]ction - All [D]iagnostics',
+      },
+      {
+        '<leader>ad',
+        function()
+          vim.cmd.RustLsp { 'renderDiagnostic', 'current' }
+        end,
+        mode = '',
+        desc = '[a]ction - Local [d]iagnostics',
+      },
+      {
+        '<leader>ae',
+        function()
+          vim.cmd.RustLsp { 'explainError' }
+        end,
+        mode = '',
+        desc = '[a]ction - [e]xplain Errors',
+      },
+      {
+        '<leader>am',
+        function()
+          vim.cmd.RustLsp { 'expandMacro' }
+        end,
+        mode = '',
+        desc = '[a]ction - [m]acro Expansion',
+      },
+      {
+        '<leader>ao',
+        function()
+          vim.cmd.RustLsp { 'openDocs' }
+        end,
+        mode = '',
+        desc = '[a]ction - [o]pen docs.rs Docs',
+      },
+      {
+        '<leader>aj',
+        function()
+          vim.cmd.RustLsp { 'joinLines' }
+        end,
+        mode = '',
+        desc = '[a]ction - [j]oin Lines',
+      },
+    },
+    default_settings = {
+      ['rust-analyzer'] = {
 
+        cargo = {
+          allFeatures = true,
+          features = 'all',
+          extraEnv = {
+            RUSTFLAGS = '--cfg rust_analyzer',
+          },
+        },
+      },
+    },
+  },
+  {
+    'stevearc/oil.nvim',
+    dependencies = { { 'nvim-tree/nvim-web-devicons' } },
+    lazy = false,
+  },
+  {
+    'AlexandrosAlexiou/kotlin.nvim',
+    ft = { 'kotlin' },
+    dependencies = {
+      'mason.nvim',
+      'mason-lspconfig.nvim',
+      'oil.nvim',
+      {
+        'folke/trouble.nvim',
+        cmd = 'Trouble',
+        opts = {},
+      },
+    },
+    config = function()
+      require('kotlin').setup {}
+
+      -- Keymaps with <leader>lk prefix
+      vim.keymap.set('n', '<leader>lka', ':KotlinCodeActions<CR>', { desc = 'Kotlin code actions' })
+      vim.keymap.set('n', '<leader>lkq', ':KotlinQuickFix<CR>', { desc = 'Kotlin quick fix' })
+      vim.keymap.set('n', '<leader>lko', ':KotlinOrganizeImports<CR>', { desc = 'Organize Kotlin imports' })
+      vim.keymap.set('n', '<leader>lkf', ':KotlinFormat<CR>', { desc = 'Format Kotlin buffer (LSP)' })
+      vim.keymap.set('n', '<leader>lks', ':KotlinSymbols<CR>', { desc = 'Show Kotlin document symbols' })
+      vim.keymap.set('n', '<leader>lkw', ':KotlinWorkspaceSymbols<CR>', { desc = 'Search workspace symbols' })
+      vim.keymap.set('n', '<leader>lkr', ':KotlinReferences<CR>', { desc = 'Find Kotlin references' })
+      vim.keymap.set('n', '<leader>lkn', ':KotlinRename<CR>', { desc = 'Rename Kotlin symbol' })
+      vim.keymap.set('n', '<leader>lkh', ':KotlinInlayHintsToggle<CR>', { desc = 'Toggle Kotlin inlay hints' })
+      vim.keymap.set('n', '<leader>lkc', ':KotlinCleanWorkspace<CR>', { desc = 'Clean Kotlin workspace' })
+    end,
+  },
   { -- Autoformat
     'stevearc/conform.nvim',
     event = { 'BufWritePre' },
@@ -752,7 +996,6 @@ require('lazy').setup({
       },
     },
   },
-
   -- {
   --   'luukvbaal/statuscol.nvim',
   --   config = function()
@@ -792,7 +1035,6 @@ require('lazy').setup({
   --     }
   --   end,
   -- },
-
   { -- Autocompletion
     'hrsh7th/nvim-cmp',
     event = 'InsertEnter',
@@ -908,28 +1150,72 @@ require('lazy').setup({
       }
     end,
   },
-
+  -- Change the name of the colorscheme plugin below, and then
+  -- change the command in the config to whatever the name of that colorscheme is.
+  --
+  -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
+  -- init = function()
+  --   -- Load the colorscheme here.
+  --   -- Like many other themes, this one has different styles, and you could load
+  --   -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+  --   vim.cmd.colorscheme 'tokyonight-night'
+  --
+  --   -- You can configure highlights by doing something like:
+  --   vim.cmd.hi 'Comment gui=none'
+  -- end,
   { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
     'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
+    priority = 999, -- Make sure to load this before all the other start plugins.
+  },
+  {
+    'scottmckendry/cyberdream.nvim',
+    lazy = false,
+    priority = 1000,
+    opts = {
+      transparent = true,
+    },
     init = function()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      vim.cmd.colorscheme 'cyberdream'
 
       -- You can configure highlights by doing something like:
       vim.cmd.hi 'Comment gui=none'
+      vim.api.nvim_set_hl(0, 'Comment', { fg = '#FFB86C' })
     end,
   },
-
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
+  {
+    'pmizio/typescript-tools.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+    config = function()
+      require('typescript-tools').setup {
+        -- Enable the global Neovim inlay hints rendering when the server attaches
+        on_attach = function(client, bufnr)
+          if vim.lsp.inlay_hint then
+            vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+          end
+        end,
+        settings = {
+          -- Pass all VS-Code style TypeScript options directly to tsserver
+          tsserver_file_preferences = {
+            -- Specify how parameter names are displayed (all, literals, none, numeric)
+            includeInlayParameterNameHints = 'all', -- Options: "none" | "literals" | "all"
+            includeInlayParameterNameHintsWhenArgumentMatchesName = true,
 
+            -- Enable function return types, property types, and variable types
+            includeInlayFunctionParameterTypeHints = true,
+            includeInlayVariableTypeHints = true,
+            includeInlayVariableTypeHintsWhenTypeMatchesName = true,
+            includeInlayPropertyDeclarationTypeHints = true,
+            includeInlayFunctionLikeReturnTypeHints = true,
+
+            -- Enum and advanced types
+            includeInlayEnumMemberValueHints = true,
+          },
+        },
+      }
+    end,
+  },
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
     config = function()
@@ -953,17 +1239,17 @@ require('lazy').setup({
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
-      local statusline = require 'mini.statusline'
+      -- local statusline = require 'mini.statusline'
       -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
+      -- statusline.setup { use_icons = vim.g.have_nerd_font }
 
       -- You can configure sections in the statusline by overriding their
       -- default behavior. For example, here we set the section for
       -- cursor location to LINE:COLUMN
       ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
+      -- statusline.section_location = function()
+      --   return '%2l:%-2v'
+      -- end
 
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
@@ -972,7 +1258,8 @@ require('lazy').setup({
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
-    main = 'nvim-treesitter.configs', -- Sets main module to use for opts
+    branch = 'main',
+    -- main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
       ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
@@ -980,6 +1267,7 @@ require('lazy').setup({
       auto_install = true,
       highlight = {
         enable = true,
+        -- disable = { 'markdown', 'markdown_inline' },
         -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
         --  If you are experiencing weird indenting issues, add the language to
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
@@ -1057,6 +1345,196 @@ require('lazy').setup({
   -- Or use telescope!
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
+
+  -- Plugins I added!
+  {
+    'hedyhli/outline.nvim',
+    lazy = true,
+    cmd = { 'Outline', 'OutlineOpen' },
+    keys = { -- Example mapping to toggle outline
+      { '\\', '<cmd>OutlineOpen!<CR><cmd>OutlineFocus<CR>', desc = 'Toggle outline w/ focus' },
+      { '<leader>o', '<cmd>OutlineOpen!<CR>', desc = 'Toggle outline' },
+    },
+    opts = {
+      -- Your setup opts here
+      outline_window = {
+        width = 25,
+        relative_width = true,
+        position = 'left',
+      },
+      outline_items = {
+        show_symbol_lineno = true,
+      },
+      preview_window = {
+        auto_preview = true,
+        winblend = 30,
+        live = true,
+      },
+    },
+  },
+  {
+    'nvim-lualine/lualine.nvim',
+    dependencies = { 'nvim-tree/nvim-web-devicons' },
+    opts = {
+      options = {
+        -- theme = 'gruvbox',
+        always_divide_middle = false,
+        globalstatus = true,
+      },
+      sections = {
+        lualine_a = { 'mode' },
+        lualine_b = {},
+        lualine_c = {
+          {
+            'windows',
+            mode = 2,
+            windows_color = {
+              active = { fg = 'cyan' },
+            },
+          },
+        },
+        lualine_x = {
+          {
+            'tabs',
+            mode = 2,
+            path = 0,
+            tabs_color = {
+              active = { fg = 'cyan' },
+            },
+          },
+        },
+        lualine_y = {},
+        lualine_z = { 'branch', 'diff' },
+      },
+      tabline = {
+        lualine_a = {},
+        lualine_b = {},
+        lualine_c = {},
+        lualine_x = { {
+          'buffers',
+          mode = 4,
+          buffers_color = {
+            active = { fg = 'cyan' },
+          },
+        } },
+        lualine_y = {},
+        lualine_z = {},
+      },
+      winbar = {
+        lualine_c = { {
+          'filename',
+          path = 1,
+          color = { fg = 'cyan' },
+        } },
+        lualine_x = {
+          {
+            'location',
+            color = { fg = 'cyan' },
+          },
+          {
+            'progress',
+            color = { fg = 'cyan' },
+          },
+        },
+      },
+      inactive_winbar = {
+        lualine_a = {},
+        lualine_b = {},
+        lualine_c = { 'filename' },
+        lualine_x = {},
+        lualine_y = {},
+        lualine_z = {},
+      },
+    },
+  },
+  {
+    'folke/edgy.nvim',
+    event = 'VeryLazy',
+    opts = {
+      left = {
+        size = 50,
+        {
+          title = 'Outline',
+          ft = 'Outline',
+          size = { height = 0.5 },
+        },
+        {
+          title = 'Tabman',
+          ft = 'tabman',
+          size = { height = 0.5 },
+        },
+      },
+    },
+  },
+  {
+    'wsdjeg/tabman.nvim',
+  },
+  {
+    'delphinus/md-render.nvim',
+    version = '*',
+    dependencies = {
+      { 'nvim-tree/nvim-web-devicons', version = '*' }, -- optional: file type icons in code blocks
+      -- { 'delphinus/budoux.lua', version = '*' }, -- optional: CJK phrase-level line breaking
+    },
+    keys = {
+      { '<leader>mp', '<Plug>(md-render-preview)', desc = 'Markdown preview (toggle)' },
+      { '<leader>mt', '<Plug>(md-render-preview-tab)', desc = 'Markdown preview in tab (toggle)' },
+      { '<leader>md', '<Plug>(md-render-demo)', desc = 'Markdown render demo' },
+    },
+  },
+  {
+    'iamcco/markdown-preview.nvim',
+    cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
+    build = 'cd app && npm install',
+    init = function()
+      vim.g.mkdp_filetypes = { 'markdown' }
+    end,
+    ft = { 'markdown' },
+  },
+  {
+    'mikavilpas/yazi.nvim',
+    version = '*', -- use the latest stable version
+    event = 'VeryLazy',
+    dependencies = {
+      { 'nvim-lua/plenary.nvim', lazy = true },
+    },
+    keys = {
+      -- 👇 in this section, choose your own keymappings!
+      {
+        '<leader>-',
+        mode = { 'n', 'v' },
+        '<cmd>Yazi<cr>',
+        desc = 'Open yazi at the current file',
+      },
+      {
+        -- Open in the current working directory
+        '<leader>cw',
+        '<cmd>Yazi cwd<cr>',
+        desc = "Open the file manager in nvim's working directory",
+      },
+      {
+        '<c-up>',
+        '<cmd>Yazi toggle<cr>',
+        desc = 'Resume the last yazi session',
+      },
+    },
+    opts = {
+      -- if you want to open yazi instead of netrw, see below for more info
+      open_for_directories = true,
+      keymaps = {
+        show_help = '<f1>',
+      },
+      floating_window_scaling_factor = 0.8,
+      yazi_floating_window_winblend = 0,
+    },
+    -- 👇 if you use `open_for_directories=true`, this is recommended
+    init = function()
+      -- mark netrw as loaded so it's not loaded at all.
+      --
+      -- More details: https://github.com/mikavilpas/yazi.nvim/issues/802
+      vim.g.loaded_netrwPlugin = 1
+    end,
+  },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
@@ -1078,6 +1556,192 @@ require('lazy').setup({
     },
   },
 })
+-- Define the standard Node.js project root files
+local NODE_ROOT_FILES = { 'package.json', 'tsconfig.json', '.node-version' }
+
+-- Create a searcher that prioritizes your .node-version file
+-- local node_root_searcher = util.root_pattern(unpack(NODE_ROOT_FILES))
+--
+-- -- Custom root_dir function for ts_ls (or tsserver)
+-- local function ts_ls_root_dir(fname)
+--   local root = node_root_searcher(fname)
+--
+--   if root and root ~= util.path.sanitize(vim.loop.cwd()) then
+--     for _, file in ipairs(DENO_ROOT_FILES) do
+--       if util.path.is_file(root .. '/' .. file) then
+--         return nil
+--       end
+--     end
+--   end
+--   return root
+-- end
+
+local servers = {
+  -- clangd = {},
+  gopls = {},
+  -- pyright = {},
+  -- rust_analyzer = {},
+  -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
+  --
+  -- Some languages (like typescript) have entire language plugins that can be useful:
+  --    https://github.com/pmizio/typescript-tools.nvim
+  --
+  -- But for many setups, the LSP (`ts_ls`) will work just fine
+  -- ts_ls = {
+  --   root_dir = function(fname)
+  --     local util = require 'lspconfig.util'
+  --     -- Don't start if this is a Deno project
+  --     -- local deno_root = util.root_pattern('deno.json', 'deno.jsonc', 'deno.lock')(fname)
+  --     -- if deno_root then
+  --     --   return nil
+  --     -- end
+  --     return util.root_pattern('package.json', 'tsconfig.json', '.node-version')(fname)
+  --   end,
+  --   -- root_dir = ts_ls_root_dir,
+  --   -- require('lspconfig').util.root_pattern { '.node-version' },
+  --   cmd = { 'typescript-language-server', '--stdio' },
+  --   root_markers = { 'package.json', '.node-version' },
+  --   single_file_support = true,
+  --   settings = {
+  --     javascript = {
+  --       inlayHints = {
+  --         enabled = true,
+  --       },
+  --     },
+  --     typescript = {
+  --       inlayHints = {
+  --         enabled = true,
+  --         includeInlayParameterNameHints = 'all',
+  --         includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+  --         includeInlayFunctionParameterTypeHints = true,
+  --         includeInlayVariableTypeHints = true,
+  --         includeInlayPropertyDeclarationTypeHints = true,
+  --         includeInlayFunctionLikeReturnTypeHints = true,
+  --         includeInlayEnumMemberValueHints = true,
+  --       },
+  --     },
+  --   },
+  -- },
+  -- denols = {
+  --   -- root_dir = require('lspconfig').util.root_pattern { 'deno.json', 'deno.lock', 'deno.jsonc' },
+  --   single_file_support = false,
+  --   settings = {},
+  -- },
+  --
+
+  lua_ls = {
+    -- cmd = { ... },
+    -- filetypes = { ... },
+    -- capabilities = {},
+    settings = {
+      Lua = {
+        completion = {
+          callSnippet = 'Replace',
+        },
+        -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
+        -- diagnostics = { disable = { 'missing-fields' } },
+      },
+    },
+  },
+}
+local capabilities = vim.tbl_deep_extend('force', vim.lsp.protocol.make_client_capabilities(), require('cmp_nvim_lsp').default_capabilities())
+
+for server_name, server_config in pairs(servers) do
+  local config = vim.deepcopy(server_config)
+  config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, config.capabilities or {})
+  vim.lsp.config(server_name, config)
+  vim.lsp.enable(server_name)
+end
+
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if not client then
+      return
+    end
+
+    -- Push settings to the server if we have any defined
+    local settings = servers[client.name] and servers[client.name].settings
+    if settings then
+      client.config.settings = settings
+      client.notify('workspace/didChangeConfiguration', { settings = settings })
+    end
+
+    -- Enable inlay hints for all servers that support it
+    if client.supports_method 'textDocument/inlayHint' then
+      vim.lsp.inlay_hint.enable(true, { bufnr = args.buf })
+    end
+
+    vim.lsp.buf.format {
+      filter = function(client_i)
+        return client_i.name ~= 'ts_ls'
+      end,
+    }
+  end,
+})
+
+require('lualine').setup()
+
+local tabman_buf = -1
+vim.keymap.set('n', '<leader>tm', function()
+  require('tabman').open()
+  tabman_buf = vim.api.nvim_get_current_buf()
+end, { desc = 'Open Tabman' })
+
+vim.keymap.set('n', '<leader>ts', function()
+  local og_win = vim.api.nvim_get_current_win()
+  vim.cmd 'OutlineOpen!'
+  require('tabman').open {
+    filter = function(win)
+      local win_buf = vim.api.nvim_win_get_buf(win)
+      local win_type = vim.api.nvim_get_option_value('filetype', { buf = win_buf })
+      return (win_type ~= 'Outline') and (win_type ~= 'tabman')
+    end,
+  }
+  vim.api.nvim_set_current_win(og_win)
+end, { desc = 'Open sidebar' })
+
+vim.opt.laststatus = 3
+vim.opt.splitkeep = 'screen'
+
+-- vim.api.nvim_create_autocmd('FileType', {
+--   pattern = { 'markdown' },
+--   callback = function(ev)
+--     local buftype = vim.api.nvim_get_option_value('buftype', { buf = ev.buf })
+--     if buftype == 'nofile' then
+--       vim.treesitter.stop(ev.buf)
+--     end
+--   end,
+-- })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+function init_floating_win(on_window)
+  local buf = vim.api.nvim_create_buf(false, true) -- false: not listed, true: scratch buffer
+
+  -- 2. Define the window geometry (centered and medium-sized)
+  local width = vim.api.nvim_get_option 'columns'
+  local height = vim.api.nvim_get_option 'lines'
+  local win_width = math.floor(width * 0.7) -- 70% of terminal width
+  local win_height = math.floor(height * 0.7) -- 70% of terminal height
+  local row = math.floor((height - win_height) / 2)
+  local col = math.floor((width - win_width) / 2)
+
+  local opts = {
+    relative = 'editor', -- Relative to the whole editor
+    row = row,
+    col = col,
+    width = win_width,
+    height = win_height,
+    border = 'single', -- Or 'rounded', 'double', 'shadow'
+    style = 'minimal',
+    focusable = true,
+  }
+
+  -- 3. Open the floating window
+  local winid = vim.api.nvim_open_win(buf, true, opts) -- true: enter the window
+  if on_window then
+    vim.schedule(on_window)
+  end
+  return winid
+end

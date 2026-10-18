@@ -23,13 +23,33 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
+    nikitabobko = {
+      url = "github:nikitabobko/homebrew-tap";
+      flake = false;
+    };
+    lgug2z = {
+      url = "github:LGUG2Z/homebrew-tap";
+      flake = false;
+    };
+    asmvik = {
+      url = "github:asmvik/homebrew-formulae";
+      flake = false;
+    };
+    felixkratz = {
+      url = "github:FelixKratz/homebrew-formulae";
+      flake = false;
+    };
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    xoshbin = {
+      url = "github:Xoshbin/homebrew-asyar";
+      flake=false;
+    };
   };
 
-  outputs = { self, darwin, nix-homebrew, homebrew-bundle, homebrew-core, homebrew-cask, home-manager, nixpkgs, disko } @inputs:
+  outputs = { self, darwin, nix-homebrew, homebrew-bundle, homebrew-core, homebrew-cask, home-manager, nixpkgs, nikitabobko, xoshbin, lgug2z, asmvik, felixkratz, disko } @inputs:
     let
       user = "edwinsantos";
       linuxSystems = [ "x86_64-linux" "aarch64-linux" ];
@@ -91,6 +111,10 @@
                   "homebrew/homebrew-core" = homebrew-core;
                   "homebrew/homebrew-cask" = homebrew-cask;
                   "homebrew/homebrew-bundle" = homebrew-bundle;
+                  "nikitabobko/homebrew-tap" = nikitabobko;
+                  "FelixKratz/homebrew-formulae" = felixkratz;
+                  "LGUG2Z/homebrew-tap" = lgug2z;
+                  "asmvik/homebrew-formulae" = asmvik;
                 };
                 mutableTaps = false;
                 autoMigrate = true;

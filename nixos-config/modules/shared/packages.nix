@@ -12,6 +12,11 @@ with pkgs; [
   fzf
   fd
   ripgrep
+  zstd
+  gnupg
+  hyperfine
+  pre-commit
+  difftastic
 
   # CUSTOM terminal workflow
   watchexec
@@ -22,7 +27,10 @@ with pkgs; [
   just
   bottom
   iftop
-  # coreutils
+  w3m
+  eget
+  btop
+  coreutils
   # killall
   # openssh
   # sqlite
@@ -32,22 +40,38 @@ with pkgs; [
   font-awesome
   hack-font
   noto-fonts
-  noto-fonts-emoji
+  noto-fonts-color-emoji
   meslo-lgs-nf
   nerd-fonts.ubuntu
   nerd-fonts.jetbrains-mono
   jetbrains-mono
 
   # Language tools
+  cmake
+  clang-tools
   rustup
+  bacon
+  erlang
+  rebar3
+  gleam
   uv
   deno
+  # bun
   go
   fnm
-  nodejs
+  # nodejs
+  nodejs_26
   pnpm
   typescript
+  tailwindcss_4
+  # zig
 
+  lazygit
+
+  opencode
+  gemini-cli
+  claude-code
+  mermaid-cli
   # Text and terminal utilities
   # hunspell
   # jq

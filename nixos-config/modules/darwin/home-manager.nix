@@ -26,6 +26,17 @@ in
   homebrew = {
     enable = true;
     casks = pkgs.callPackage ./casks.nix {};
+    onActivation = {
+      autoUpdate = true;
+      cleanup = "uninstall";
+      upgrade = true;
+    };
+    brews = [
+      "borders"
+      "lgug2z/tap/komorebi-for-mac"
+      "asmvik/formulae/skhd"
+      # "Xoshbin/asyar"
+    ];
     # onActivation.cleanup = "uninstall";
 
     # These app IDs are from using the mas CLI app
@@ -46,6 +57,7 @@ in
   # Enable home-manager
   home-manager = {
     useGlobalPkgs = true;
+    backupFileExtension = "backup";
     users.${user} = { pkgs, config, lib, ... }:{
       home = {
         enableNixpkgsReleaseCheck = false;
