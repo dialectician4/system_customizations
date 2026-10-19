@@ -67,7 +67,9 @@ with pkgs; [
   # zig
 
   lazygit
+  lazydocker
 
+  pi-coding-agent
   opencode
   gemini-cli
   claude-code
