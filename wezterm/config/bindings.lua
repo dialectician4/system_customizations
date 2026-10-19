@@ -5,8 +5,10 @@ local act = wezterm.action
 
 local mod = {}
 
+mod.CMD_MOD = 'ALT|SHIFT'
+
 if platform.is_mac then
-   mod.SUPER = 'SUPER'
+   mod.SUPER = 'CMD_MOD'
    mod.SUPER_REV = 'SUPER|CTRL'
 elseif platform.is_win or platform.is_linux then
    mod.SUPER = 'ALT' -- to not conflict with Windows key shortcuts
@@ -18,6 +20,8 @@ local keys = {
    -- misc/useful --
    { key = 'F1', mods = 'NONE', action = 'ActivateCopyMode' },
    { key = 'F2', mods = 'NONE', action = act.ActivateCommandPalette },
+   { key = 'Space', mods = mod.CMD_MOD, action = act.ActivateCommandPalette },
+   { key = 'Tab', mods = mod.CMD_MOD, action = act.ShowLauncher },
    { key = 'F3', mods = 'NONE', action = act.ShowLauncher },
    { key = 'F4', mods = 'NONE', action = act.ShowLauncherArgs({ flags = 'FUZZY|TABS' }) },
    {
@@ -25,9 +29,9 @@ local keys = {
       mods = 'NONE',
       action = act.ShowLauncherArgs({ flags = 'FUZZY|WORKSPACES' }),
    },
-   { key = 'F11', mods = 'NONE',    action = act.ToggleFullScreen },
-   { key = 'F12', mods = 'NONE',    action = act.ShowDebugOverlay },
-   { key = 'f',   mods = mod.SUPER, action = act.Search({ CaseInSensitiveString = '' }) },
+   { key = 'F11', mods = 'NONE',      action = act.ToggleFullScreen },
+   { key = 'F12', mods = 'NONE',      action = act.ShowDebugOverlay },
+   { key = 'f',   mods = mod.CMD_MOD, action = act.Search({ CaseInSensitiveString = '' }) },
    {
       key = 'u',
       mods = mod.SUPER_REV,
@@ -49,9 +53,9 @@ local keys = {
    },
 
    -- cursor movement --
-   { key = 'LeftArrow',  mods = mod.SUPER,     action = act.SendString '\u{1b}OH' },
-   { key = 'RightArrow', mods = mod.SUPER,     action = act.SendString '\u{1b}OF' },
-   { key = 'Backspace',  mods = mod.SUPER,     action = act.SendString '\u{15}' },
+   { key = 'LeftArrow',  mods = mod.CMD_MOD,   action = act.SendString '\u{1b}OH' },
+   { key = 'RightArrow', mods = mod.CMD_MOD,   action = act.SendString '\u{1b}OF' },
+   { key = 'Backspace',  mods = mod.CMD_MOD,   action = act.SendString '\u{15}' },
 
    -- copy/paste --
    { key = 'c',          mods = 'CTRL|SHIFT',  action = act.CopyTo('Clipboard') },
@@ -59,31 +63,30 @@ local keys = {
 
    -- tabs --
    -- tabs: spawn+close
-   { key = 't',          mods = mod.SUPER,     action = act.SpawnTab('DefaultDomain') },
-   { key = 't',          mods = mod.SUPER_REV, action = act.SpawnTab({ DomainName = 'WSL:Ubuntu' }) },
-   { key = 'w',          mods = mod.SUPER_REV, action = act.CloseCurrentTab({ confirm = false }) },
+   { key = 't',          mods = mod.CMD_MOD,   action = act.SpawnTab('DefaultDomain') },
+   { key = 'w',          mods = mod.CMD_MOD,   action = act.CloseCurrentTab({ confirm = false }) },
 
    -- tabs: navigation
-   { key = '[',          mods = mod.SUPER,     action = act.ActivateTabRelative(-1) },
-   { key = ']',          mods = mod.SUPER,     action = act.ActivateTabRelative(1) },
+   { key = '{',          mods = mod.CMD_MOD,   action = act.ActivateTabRelative(-1) },
+   { key = '}',          mods = mod.CMD_MOD,   action = act.ActivateTabRelative(1) },
    { key = '[',          mods = mod.SUPER_REV, action = act.MoveTabRelative(-1) },
    { key = ']',          mods = mod.SUPER_REV, action = act.MoveTabRelative(1) },
 
    -- tab: title
-   { key = '0',          mods = mod.SUPER,     action = act.EmitEvent('tabs.manual-update-tab-title') },
+   { key = '0',          mods = mod.CMD_MOD,   action = act.EmitEvent('tabs.manual-update-tab-title') },
    { key = '0',          mods = mod.SUPER_REV, action = act.EmitEvent('tabs.reset-tab-title') },
 
    -- tab: hide tab-bar
-   { key = '9',          mods = mod.SUPER,     action = act.EmitEvent('tabs.toggle-tab-bar'), },
+   { key = '9',          mods = mod.CMD_MOD,   action = act.EmitEvent('tabs.toggle-tab-bar'), },
 
    -- window --
    -- window: spawn windows
-   { key = 'n',          mods = mod.SUPER,     action = act.SpawnWindow },
+   { key = 'n',          mods = mod.CMD_MOD,   action = act.SpawnWindow },
 
    -- window: zoom window
    {
       key = '-',
-      mods = mod.SUPER,
+      mods = mod.CMD_MOD,
       action = wezterm.action_callback(function(window, _pane)
          local dimensions = window:get_dimensions()
          if dimensions.is_full_screen then
@@ -96,7 +99,7 @@ local keys = {
    },
    {
       key = '=',
-      mods = mod.SUPER,
+      mods = mod.CMD_MOD,
       action = wezterm.action_callback(function(window, _pane)
          local dimensions = window:get_dimensions()
          if dimensions.is_full_screen then
@@ -111,21 +114,21 @@ local keys = {
    -- background controls --
    {
       key = [[/]],
-      mods = mod.SUPER,
+      mods = mod.CMD_MOD,
       action = wezterm.action_callback(function(window, _pane)
          backdrops:random(window)
       end),
    },
    {
       key = [[,]],
-      mods = mod.SUPER,
+      mods = mod.CMD_MOD,
       action = wezterm.action_callback(function(window, _pane)
          backdrops:cycle_back(window)
       end),
    },
    {
       key = [[.]],
-      mods = mod.SUPER,
+      mods = mod.CMD_MOD,
       action = wezterm.action_callback(function(window, _pane)
          backdrops:cycle_forward(window)
       end),
@@ -149,7 +152,7 @@ local keys = {
    },
    {
       key = 'b',
-      mods = mod.SUPER,
+      mods = mod.CMD_MOD,
       action = wezterm.action_callback(function(window, _pane)
          backdrops:toggle_focus(window)
       end)
@@ -158,25 +161,25 @@ local keys = {
    -- panes --
    -- panes: split panes
    {
-      key = [[\]],
-      mods = mod.SUPER,
+      key = 'd',
+      mods = mod.CMD_MOD,
       action = act.SplitVertical({ domain = 'CurrentPaneDomain' }),
    },
    {
-      key = [[\]],
-      mods = mod.SUPER_REV,
+      key = 'r',
+      mods = mod.CMD_MOD,
       action = act.SplitHorizontal({ domain = 'CurrentPaneDomain' }),
    },
 
    -- panes: zoom+close pane
-   { key = 'Enter', mods = mod.SUPER,     action = act.TogglePaneZoomState },
-   { key = 'w',     mods = mod.SUPER,     action = act.CloseCurrentPane({ confirm = false }) },
+   { key = 'Enter', mods = mod.CMD_MOD, action = act.TogglePaneZoomState },
+   { key = 'q',     mods = mod.CMD_MOD, action = act.CloseCurrentPane({ confirm = false }) },
 
    -- panes: navigation
-   { key = 'k',     mods = mod.SUPER_REV, action = act.ActivatePaneDirection('Up') },
-   { key = 'j',     mods = mod.SUPER_REV, action = act.ActivatePaneDirection('Down') },
-   { key = 'h',     mods = mod.SUPER_REV, action = act.ActivatePaneDirection('Left') },
-   { key = 'l',     mods = mod.SUPER_REV, action = act.ActivatePaneDirection('Right') },
+   { key = 'k',     mods = mod.CMD_MOD, action = act.ActivatePaneDirection('Up') },
+   { key = 'j',     mods = mod.CMD_MOD, action = act.ActivatePaneDirection('Down') },
+   { key = 'h',     mods = mod.CMD_MOD, action = act.ActivatePaneDirection('Left') },
+   { key = 'l',     mods = mod.CMD_MOD, action = act.ActivatePaneDirection('Right') },
    {
       key = 'p',
       mods = mod.SUPER_REV,
@@ -184,10 +187,10 @@ local keys = {
    },
 
    -- panes: scroll pane
-   { key = 'u',        mods = mod.SUPER, action = act.ScrollByLine(-5) },
-   { key = 'd',        mods = mod.SUPER, action = act.ScrollByLine(5) },
-   { key = 'PageUp',   mods = 'NONE',    action = act.ScrollByPage(-0.75) },
-   { key = 'PageDown', mods = 'NONE',    action = act.ScrollByPage(0.75) },
+   -- { key = 'u',        mods = mod.CMD_MOD, action = act.ScrollByLine(-5) },
+   -- { key = 'd',        mods = mod.CMD_MOD, action = act.ScrollByLine(5) },
+   { key = 'PageUp',   mods = 'NONE', action = act.ScrollByPage(-0.75) },
+   { key = 'PageDown', mods = 'NONE', action = act.ScrollByPage(0.75) },
 
    -- key-tables --
    -- resizes fonts
@@ -217,9 +220,8 @@ local key_tables = {
    resize_font = {
       { key = 'k',      action = act.IncreaseFontSize },
       { key = 'j',      action = act.DecreaseFontSize },
-      { key = 'r',      action = act.ResetFontSize },
+      -- { key = 'r',      action = act.ResetFontSize },
       { key = 'Escape', action = 'PopKeyTable' },
-      { key = 'q',      action = 'PopKeyTable' },
    },
    resize_pane = {
       { key = 'k',      action = act.AdjustPaneSize({ 'Up', 1 }) },
@@ -227,7 +229,6 @@ local key_tables = {
       { key = 'h',      action = act.AdjustPaneSize({ 'Left', 1 }) },
       { key = 'l',      action = act.AdjustPaneSize({ 'Right', 1 }) },
       { key = 'Escape', action = 'PopKeyTable' },
-      { key = 'q',      action = 'PopKeyTable' },
    },
 }
 
