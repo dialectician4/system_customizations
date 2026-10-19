@@ -16,7 +16,7 @@ config.allowUnfree = true;
       packages.${system}.default = pkgs.buildEnv {
         name = "temp-core-tools";
         paths = sharedPackages ++ [
- pkgs.wezterm
+ # pkgs.wezterm
  pkgs.neovim 
  pkgs.starship
  pkgs.zoxide

@@ -131,6 +131,7 @@ alias ga='git add'
 alias gco='git checkout'
 alias gc='git commit'
 alias yz='yazi'
+alias zj='zellij'
 e () {
 local target="."
 if [ -n "$1" ]; then
